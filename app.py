@@ -16,19 +16,6 @@ st.set_page_config(
     layout="centered"
 )
 
-# Add custom CSS for text wrapping and button alignment
-st.markdown("""
-<style>
-.stTextArea textarea {
-    white-space: pre-wrap !important;
-}
-div[data-testid="column"] {
-    align-items: center;
-    gap: 0.5rem;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # Initialize OpenAI client
 def initialize_openai_client(api_key):
     try:
@@ -49,7 +36,7 @@ def generate_pdf(content):
     text.setFont("Courier", 12)
     
     for line in content.split('\n'):
-        if y_position < 40:  # Check if we need a new page
+        if y_position < 40:
             c.drawText(text)
             c.showPage()
             y_position = height - 40
@@ -139,7 +126,6 @@ if generate_button:
         st.error("Please enter your OpenAI API key in the sidebar or add it to your .env file!")
     else:
         with st.spinner("Generating your perfect email..."):
-            # Construct the prompt
             prompt = f"""
             Compose a {tone.lower()} email in {language} with the following specifications:
             - Length: {email_length}
@@ -157,16 +143,15 @@ if generate_button:
             generated_email = generate_email(prompt)
             if generated_email:
                 st.session_state.generated_email = generated_email
-                st.session_state.edit_mode = False  # Reset edit mode on new generation
+                st.session_state.edit_mode = False
 
 # Display and edit generated email
 if 'generated_email' in st.session_state:
     st.success("Email generated successfully!")
     
-    # Initialize edit mode if not exists
     if 'edit_mode' not in st.session_state:
         st.session_state.edit_mode = False
-    
+
     # Email display/edit area
     if st.session_state.edit_mode:
         edited_email = st.text_area(
@@ -177,16 +162,11 @@ if 'generated_email' in st.session_state:
         )
         st.session_state.generated_email = edited_email
     else:
-        st.text_area(
-            "Generated Email:",
-            value=st.session_state.generated_email,
-            height=400,
-            disabled=True,
-            label_visibility="collapsed"
-        )
-    
+        # Use code block with copy button
+        st.code(st.session_state.generated_email, language="text")
+
     # Action buttons row
-    col1, col2, col3, col4 = st.columns([1,1,1,1])
+    col1, col2, col3 = st.columns([1,1,1])
     
     with col1:
         if st.session_state.edit_mode:
@@ -199,10 +179,6 @@ if 'generated_email' in st.session_state:
                 st.rerun()
     
     with col2:
-        if st.button("📋 Copy", use_container_width=True):
-            st.toast("Email copied to clipboard! (Use Ctrl+V to paste)", icon="📋")
-    
-    with col3:
         st.download_button(
             label="⬇️ TXT",
             data=st.session_state.generated_email,
@@ -211,7 +187,7 @@ if 'generated_email' in st.session_state:
             use_container_width=True
         )
     
-    with col4:
+    with col3:
         pdf_buffer = generate_pdf(st.session_state.generated_email)
         st.download_button(
             label="⬇️ PDF",
