@@ -303,6 +303,13 @@ def generate_email_with_retry(prompt, max_retries=MAX_RETRIES):
             wait_time = 1 * (attempt + 1)
             time.sleep(wait_time)
 
+def remove_attachment(file_name):
+    """Remove an attachment from the uploaded files"""
+    st.session_state.uploaded_files = [
+        f for f in st.session_state.uploaded_files 
+        if f.name != file_name
+    ]
+
 # --- Session State Initialization ---
 if 'history' not in st.session_state:
     st.session_state.history = []
@@ -430,7 +437,8 @@ with tab1:
             "Attach Files (will be referenced in email):",
             accept_multiple_files=True,
             type=['pdf', 'docx', 'xlsx', 'txt', 'jpg', 'png', 'jpeg'],
-            help=f"Maximum file size: {MAX_FILE_SIZE_MB}MB each"
+            help=f"Maximum file size: {MAX_FILE_SIZE_MB}MB each",
+            key="file_uploader"
         )
 
         generate_button = st.form_submit_button(
@@ -444,6 +452,21 @@ with tab1:
         if invalid_files:
             st.warning(f"Skipped {len(invalid_files)} invalid files (type or size)")
         st.session_state.uploaded_files = [f for f in uploaded_files if validate_file(f)]
+
+    # Display current attachments with remove buttons (outside the form)
+    if st.session_state.uploaded_files:
+        st.write("**Current Attachments:**")
+        for file in st.session_state.uploaded_files:
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.write(f"- {file.name} ({file.size//1024} KB)")
+            with col2:
+                if st.button("❌ Remove", key=f"remove_{file.name}"):
+                    st.session_state.uploaded_files = [
+                        f for f in st.session_state.uploaded_files 
+                        if f.name != file.name
+                    ]
+                    st.rerun()
 
     # --- Email Generation Logic ---
     if generate_button:
@@ -582,6 +605,13 @@ with tab2:
     # --- History & Favorites Interface ---
     st.title("📚 Email History & Favorites")
     
+    # Clear All History Button
+    if st.session_state.history:
+        if st.button("🗑️ Clear All History", type="primary"):
+            st.session_state.history = []
+            st.session_state.favorites = []
+            st.rerun()
+    
     # History Section
     st.header("📜 Email History")
     if not st.session_state.history:
@@ -612,6 +642,12 @@ with tab2:
                         st.session_state.generated_email = email['content']
                         st.session_state.edit_mode = False
                         st.session_state.current_tab = "📧 Email Generator"
+                        st.rerun()
+                    
+                    # Delete button
+                    if st.button("🗑️ Delete", key=f"hist_delete_{idx}"):
+                        original_idx = len(st.session_state.history) - 1 - idx
+                        st.session_state.history.pop(original_idx)
                         st.rerun()
     
     # Favorites Section
