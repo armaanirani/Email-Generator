@@ -5,7 +5,6 @@ import time
 from openai import OpenAI
 from dotenv import load_dotenv
 from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 import PyPDF2
 from docx import Document
 import pandas as pd
@@ -673,7 +672,7 @@ with tab1:
 
 with tab2:
     # --- History & Favorites Interface ---
-    st.title("📚 Email History & Favorites")
+    # st.title("📚 Email History & Favorites")
     
     # Clear All History Button
     if st.session_state.history:
