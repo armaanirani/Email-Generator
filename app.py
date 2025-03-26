@@ -359,6 +359,13 @@ def remove_attachment(file_name):
         if f.name != file_name
     ]
 
+def extract_subject(email_content):
+    """Extract subject line from email content"""
+    for line in email_content.split('\n'):
+        if line.startswith('Subject:'):
+            return line.replace('Subject:', '').strip()
+    return "No Subject"
+
 # --- Session State Initialization ---
 if 'history' not in st.session_state:
     st.session_state.history = []
@@ -558,6 +565,10 @@ with tab1:
                         "metadata": {
                             "tone": tone,
                             "recipient": recipient_name,
+                            "language": language,
+                            "writing_style": writing_style,
+                            "email_length": email_length,
+                            "subject": extract_subject(generated_email),
                             "purpose": email_purpose[:50],
                             "preset": selected_preset_name if selected_preset_name != "Custom Email" else None
                         }
@@ -678,12 +689,12 @@ with tab2:
     else:
         for idx, email in enumerate(reversed(st.session_state.history)):
             with st.expander(
-                f"{email['timestamp']} - {email['metadata']['recipient']} - {email['metadata']['purpose']}",
+                f"{email['timestamp']} - {email['metadata']['subject']}",
                 expanded=False
             ):
                 col1, col2 = st.columns([4,1])
                 with col1:
-                    st.write(f"**Tone:** {email['metadata']['tone']}")
+                    st.write(f"**Tone:** {email['metadata']['tone']}| **Writing Style:** {email['metadata']['writing_style']}| **Email Length:** {email['metadata']['email_length']}")
                     if email['metadata'].get('preset'):
                         st.write(f"**Template:** {email['metadata']['preset']}")
                     st.code(email['content'], language="text")
@@ -718,12 +729,12 @@ with tab2:
     else:
         for idx, email in enumerate(reversed(favorite_emails)):
             with st.expander(
-                f"{email['timestamp']} - {email['metadata']['recipient']} - {email['metadata']['purpose']}",
+                f"{email['timestamp']} - {email['metadata']['subject']}",
                 expanded=False
             ):
                 col1, col2 = st.columns([4,1])
                 with col1:
-                    st.write(f"**Tone:** {email['metadata']['tone']}")
+                    st.write(f"**Tone:** {email['metadata']['tone']}| **Writing Style:** {email['metadata']['writing_style']}| **Email Length:** {email['metadata']['email_length']}")
                     if email['metadata'].get('preset'):
                         st.write(f"**Template:** {email['metadata']['preset']}")
                     st.code(email['content'], language="text")
