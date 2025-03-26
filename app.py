@@ -720,7 +720,7 @@ with tab2:
                         st.rerun()
     
     # Favorites Section
-    st.header("⭐ Favorite Emails")
+    st.header("❤️ Favorite Emails")
     favorite_emails = [email for email in st.session_state.history if email['favorite']]
     
     if not favorite_emails:
