@@ -10,6 +10,9 @@ import PyPDF2
 from docx import Document
 import pandas as pd
 from datetime import datetime
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+import base64
 
 # --- Configuration ---
 load_dotenv()  # Load environment variables
@@ -24,7 +27,7 @@ st.set_page_config(
 
 # --- Constants ---
 DEFAULT_MODEL = "gpt-4o-mini"  # Updated default model
-MODEL_OPTIONS = ["gpt-4-turbo-preview", "gpt-4", "gpt-4o-mini", "gpt-3.5-turbo"]  # Current model options
+MODEL_OPTIONS = ["gpt-4o", "gpt-4o-mini", "o1-mini", "o3-mini"]  # Current model options
 MAX_HISTORY_ITEMS = 20  # Maximum number of history items to keep
 MAX_FILE_SIZE_MB = 5  # Maximum file size for attachments in MB
 MAX_CONTENT_LENGTH = 3000  # Maximum context length for file content
@@ -212,36 +215,82 @@ def extract_text_from_excel(file):
     except Exception as e:
         raise Exception(f"Excel extraction error: {str(e)}")
 
-def generate_pdf(content):
+# def generate_pdf(content):
+#     """Generate PDF from email content with proper formatting."""
+#     buffer = io.BytesIO()
+#     try:
+#         c = canvas.Canvas(buffer, pagesize=letter)
+#         width, height = letter
+#         y_position = height - 40
+#         line_height = 14
+        
+#         text = c.beginText(40, y_position)
+#         text.setFont("Courier", 12)
+        
+#         for line in content.split('\n'):
+#             if y_position < 40:
+#                 c.drawText(text)
+#                 c.showPage()
+#                 y_position = height - 40
+#                 text = c.beginText(40, y_position)
+#                 text.setFont("Courier", 12)
+            
+#             text.textLine(line)
+#             y_position -= line_height
+        
+#         c.drawText(text)
+#         c.save()
+#         buffer.seek(0)
+#         return buffer
+#     except Exception as e:
+#         st.error(f"Error generating PDF: {str(e)}")
+#         return None
+
+def generate_pdf(content, title="Generated Email"):
     """Generate PDF from email content with proper formatting."""
     buffer = io.BytesIO()
     try:
-        c = canvas.Canvas(buffer, pagesize=letter)
-        width, height = letter
-        y_position = height - 40
-        line_height = 14
+        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        styles = getSampleStyleSheet()
         
-        text = c.beginText(40, y_position)
-        text.setFont("Courier", 12)
+        flowables = []
         
+        # Add title
+        flowables.append(Paragraph(title, styles['Title']))
+        flowables.append(Spacer(1, 12))
+        
+        # Process content
         for line in content.split('\n'):
-            if y_position < 40:
-                c.drawText(text)
-                c.showPage()
-                y_position = height - 40
-                text = c.beginText(40, y_position)
-                text.setFont("Courier", 12)
-            
-            text.textLine(line)
-            y_position -= line_height
+            if line.strip():
+                if line.startswith('Subject:'):
+                    flowables.append(Paragraph(f"<b>{line}</b>", styles['Heading2']))
+                elif line.startswith('Dear'):
+                    flowables.append(Paragraph(line, styles['Heading3']))
+                elif any(line.startswith(prefix) for prefix in ['Best regards,', 'Sincerely,', 'Regards,']):
+                    flowables.append(Paragraph(line, styles['Heading3']))
+                else:
+                    flowables.append(Paragraph(line, styles['BodyText']))
+                
+                flowables.append(Spacer(1, 6))
         
-        c.drawText(text)
-        c.save()
+        doc.build(flowables)
         buffer.seek(0)
         return buffer
     except Exception as e:
         st.error(f"Error generating PDF: {str(e)}")
         return None
+
+def create_download_link_pdf(pdf_bytes, filename, link_text):
+    """Create a download link for PDF content"""
+    b64 = base64.b64encode(pdf_bytes.getvalue()).decode()
+    href = f'<a href="data:application/pdf;base64,{b64}" download="{filename}">{link_text}</a>'
+    return href
+
+def create_download_link_txt(text_content, filename, link_text):
+    """Create a download link for text content"""
+    b64 = base64.b64encode(text_content.encode()).decode()
+    href = f'<a href="data:text/plain;base64,{b64}" download="{filename}">{link_text}</a>'
+    return href
 
 def build_email_prompt(params):
     """Construct the prompt for email generation."""
@@ -563,26 +612,36 @@ with tab1:
                     st.rerun()
         
         with col2:
-            st.download_button(
-                label="⬇️ TXT",
-                data=st.session_state.generated_email,
-                file_name="generated_email.txt",
-                mime="text/plain",
-                use_container_width=True,
-                help="Download as text file"
-            )
+            if st.button("📝 Save as txt", key="save_email_text"):
+                txt_filename = f"email_to_{recipient_name.replace(' ', '_')}.txt"
+                st.markdown(
+                    create_download_link_txt(
+                        st.session_state.generated_email,
+                        filename=txt_filename,
+                        link_text="📥 Download as Text"
+                    ),
+                    unsafe_allow_html=True
+                )
         
         with col3:
-            pdf_buffer = generate_pdf(st.session_state.generated_email)
-            if pdf_buffer:
-                st.download_button(
-                    label="⬇️ PDF",
-                    data=pdf_buffer,
-                    file_name="generated_email.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                    help="Download as PDF file"
+            if st.button("📄 Save as PDF", key="save_email_pdf"):
+                
+                # Generate the PDF
+                pdf_buffer = generate_pdf(
+                    st.session_state.generated_email,
+                    title=f"Email to {recipient_name}"
                 )
+                
+                # Create the download link
+                if pdf_buffer:
+                    st.markdown(
+                        create_download_link_pdf(
+                            pdf_buffer,
+                            filename=f"email_to_{recipient_name.replace(' ', '_')}.pdf",
+                            link_text="📥 Download as PDF"
+                        ),
+                        unsafe_allow_html=True
+                    )
         
         with col4:
             current_email_index = next(
