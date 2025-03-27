@@ -73,19 +73,19 @@ The AI Email Generator is a professional email composition assistant built with 
 
 ### Screenshots
 1. **Main Interface**  
-![Email Generator Interface](https://github.com/user-attachments/assets/email-generator-1.png)
+<img width="814" alt="Image" src="https://github.com/user-attachments/assets/71d841b9-6d8f-4337-bfb5-85ee0015e3dd" />
 
 2. **Presets Selection**  
-![Presets Selection](https://github.com/user-attachments/assets/email-generator-2.png)
+<img width="356" alt="Image" src="https://github.com/user-attachments/assets/b9e93ccf-a025-4c1e-9974-66e9ca661a54" />
 
 3. **Email Configuration**
-![Email Configuration](https://github.com/user-attachments/assets/email-generator-2.png)
+<img width="356" alt="Image" src="https://github.com/user-attachments/assets/e3db902a-fb97-4572-9283-0ba7815e9de5" />
 
 5. **Generated Email Example**  
-![Generated Email](https://github.com/user-attachments/assets/email-generator-3.png)
+<img width="813" alt="Image" src="https://github.com/user-attachments/assets/2977d4ff-0f4d-4373-a425-c13c0f8576e2" />
 
 6. **History & Favorites**  
-![History Panel](https://github.com/user-attachments/assets/email-generator-4.png)
+<img width="813" alt="Image" src="https://github.com/user-attachments/assets/826d2b58-3fe1-4a84-a659-0e6cd8ab6f98" />
 
 
 ## Installation
