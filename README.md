@@ -90,7 +90,6 @@ The AI Email Generator is a professional email composition assistant built with 
 ### Prerequisites
 - Python 3.8+
 - OpenAI API key
-- (Optional) Google/GitHub account for authentication
 
 ### Setup
 1. Clone the repository:
